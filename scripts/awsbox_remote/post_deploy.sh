@@ -18,3 +18,11 @@ cd ../code
 echo ">> generating production resources"
 env CONFIG_FILES=config/aws.json scripts/compress
 
+echo ">> updating strings"
+cd $HOME/locale
+svn up
+cd $HOME
+./locale/compile-json.sh locale/ code/resources/static/i18n/
+
+echo ">> generating production resources"
+code/scripts/compress
