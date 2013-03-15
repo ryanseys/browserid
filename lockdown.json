@@ -27,13 +27,14 @@
     "0.4.4": "97c12630b5828aafc4e1a8cb278cd3c743264e7b"
   },
   "bcrypt": {
-    "0.7.3": "7523db1fdd8b0bda337bade63b5b90a7ee9c448a"
+    "0.7.5": "edabf290e61761acb66047b9b43c6467a6241ce3"
   },
   "bigint": {
     "0.3.9": "0e32f5f685001a74b45d4fd9dd2e6fcbac335422"
   },
   "bindings": {
-    "1.0.0": "c3ccde60e9de6807c6f1aa4ef4843af29191c828"
+    "1.0.0": "c3ccde60e9de6807c6f1aa4ef4843af29191c828",
+    "1.1.0": "f3cc4deec19fe31f255864eb1e6ffad857266ef0"
   },
   "browserify": {
     "1.13.5": "b5f0a160733779d27547885dfb598a65ef6fdaad"
@@ -51,7 +52,7 @@
     "0.0.2": "982867e16435325c66c208a1e71b95336ea3093b"
   },
   "client-sessions": {
-    "0.0.9": "5dd2c770c53f5f203c1a60df4e29ab59dcc98674"
+    "0.1.1": "9cbe1fd6d382881b3fcc1ac8e391c34748c24646"
   },
   "coffee-script": {
     "1.3.3": "150d6b4cb522894369efed6a2101c20bc7f4a4f4"
@@ -322,7 +323,7 @@
     "0.0.1": "320b5a52d83abb5978d81a3e887d4aefb15a6164"
   },
   "toobusy": {
-    "0.2.2": "80edb87f2af7aa4c62958292ba65e89c839cb6f1"
+    "0.2.3": "c5de5d98adfb1192190d70e5b3a6a9fd3d08db72"
   },
   "traverse": {
     "0.6.3": "a053ffa1b6179b9240ea16d74bfd604bd6b6e41b"
