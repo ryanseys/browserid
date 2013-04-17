@@ -24,7 +24,7 @@
         "lockdown": "0.0.3",
         "jwcrypto": "0.4.2",
         "mysql": "0.9.5",
-        "nodemailer": "0.3.21",
+        "nodemailer": "0.4.1",
         "mkdirp": "0.3.0",
         "optimist": "0.2.8",
         "postprocess": "0.2.4",

@@ -122,7 +122,7 @@
     "0.8.3": "db8aac47ff80a7df82b4c82c126fe8970870626f"
   },
   "encoding": {
-    "0.1.4": "dcd860c75975259d4159c840153d6ccdf82b899e"
+    "0.1.6": "fec66b6d1c6b8cc554aa78c05ece35bef11a913f"
   },
   "escodegen": {
     "0.0.16": "81410ecdb666e816c6b9cb707722272952ea7c9f"
@@ -167,11 +167,8 @@
   "i18n-abide": {
     "0.0.8beta4": "b106bdaa156f90652e04b75ef6a1079c271a1b45"
   },
-  "iconv": {
-    "1.2.3": "4798b7d72c52ad463d65d72806a5fc08de3f1afd"
-  },
   "iconv-lite": {
-    "0.2.5": "e9f2155037f4afd000c095b1d5ad8831c4c5eacc"
+    "0.2.7": "45be2390d27af4b7613aac4ee4d957e3f4cbdb54"
   },
   "inherits": {
     "1.0.0": "38e1975285bf1f7ba9c84da102bb12771322ac48"
@@ -196,7 +193,7 @@
     "2.0.4": "b8b61ae09848385ec6768760e39c123e7e39568a"
   },
   "mailcomposer": {
-    "0.1.21": "4c1e5363cbfab803659a3927177bd68dfe213c47"
+    "0.1.31": "d8c3c6966c50bf9c43f212601b408216d2a5ed52"
   },
   "mersenne": {
     "0.0.3": "c39a3d45fee6091189ccd329107312ea8fe14d8a"
@@ -206,7 +203,7 @@
     "1.2.9": "009cd40867bd35de521b3b966f04e2f8d4d13d09"
   },
   "mimelib": {
-    "0.2.7": "cd37008674e939f4384748823b859ea9045636a7"
+    "0.2.12": "5dcbb99c7369e5d62d7e12e71fa334179aebd748"
   },
   "minimatch": {
     "0.0.5": "96bb490bbd3ba6836bbfac111adf75301b1584de",
@@ -233,7 +230,7 @@
     "0.0.2": "*"
   },
   "nodemailer": {
-    "0.3.21": "d9637a1d585f36fd30362c3036ce0692656fe771"
+    "0.4.1": "e9d62e8a71fc64c0aff556757f9e8a3408b6dde8"
   },
   "nomnom": {
     "1.5.2": "f4345448a853cfbd5c0d26320f2477ab0526fe2f"
@@ -269,7 +266,7 @@
     "0.5.1": "9f6bf5d9ac6c76384e95d36d15b48980e5e4add0"
   },
   "rai": {
-    "0.1.6": "46a44ff529f503cbce4c8fa3054cc440adab1926"
+    "0.1.7": "1b50f1dcb4a493a67ef7a0a8c72167d789df52a0"
   },
   "range-parser": {
     "0.0.4": "c0427ffef51c10acba0782a46c9602e744ff620b"
@@ -305,7 +302,7 @@
     "0.1.0": "cfb08ebd3cec9b7fc1a37d9ff9e875a971cf4640"
   },
   "simplesmtp": {
-    "0.1.25": "0a5a5528d03ae07495ad0370d1c8bbc0bcc47d7f"
+    "0.2.4": "27044417089dd748838e45e5215f2fc049f2cc6e"
   },
   "slide": {
     "1.1.3": "a16975ba76b766b92f98ef337243336c1fa3238f"
@@ -379,7 +376,7 @@
     "1.4.2": "01453a1d9bed1e8f172f6495bbf4c8c426321500"
   },
   "xoauth2": {
-    "0.1.3": "4448cb94fb1032c02cb2c81e95008674dcd2d1c6"
+    "0.1.7": "ce055d5ab904a170ca2f6aff932f063b349e3ba5"
   },
   "yamlparser": {
     "0.0.2": "e9f3e05e52762df751e4c522e0b6a43fff9ce1c4"
