@@ -16,6 +16,17 @@ html, body {
   height: 100%;
 }
 
+@media screen and (max-width: 640px) {
+  html {
+    /**
+    * overflow-y must be set or else the TOS/PP agreements do not scroll in
+    * Fennec/Mobile Safari when they are displayed in an IFRAME. See issue
+    * #3442
+    */
+    overflow-y: auto;
+  }
+}
+
 body {
   font: 14px/21px 'Open Sans', "Lucida Sans", "Lucida Grande", "Lucida Sans Unicode", Verdana, sans-serif;
   overflow-y: auto;
