@@ -113,10 +113,12 @@
     if(silent) {
       // check if an email is associated with this site. If that is not
       // available, there is not enough information to continue.
+      // if options.origin is available, check login from that url instead of origin for assertion
+      var login_origin = options.origin || origin;
       var requiredEmail = options.requiredEmail
-                       || storage.site.get(options.origin, "email")
-                       || storage.site.get(origin, "email");
+                       || storage.site.get(login_origin, "logged_in"); //get the logged in user (required for silent get)
       if(requiredEmail) {
+        // always get assertion for origin passed, never options.origin
         getSilent(origin, requiredEmail, complete, options.payload);
       }
       else {
