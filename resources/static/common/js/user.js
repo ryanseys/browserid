@@ -1343,9 +1343,11 @@ BrowserID.User = (function() {
      * @param {string} audience - Audience to use for the assertion.
      * @param {function} [onComplete] - Called with assertion, null otw.
      * @param {function} [onFailure] - Called on error.
+     * @param {object} [payload] - optional extra payload for assertion
      */
-    getAssertion: function(email, audience, onComplete, onFailure) {
+    getAssertion: function(email, audience, onComplete, onFailure, payload) {
       var storedID = storage.getEmail(email, issuer),
+          payload = payload || {},
           assertion,
           self=this;
 
@@ -1365,7 +1367,8 @@ BrowserID.User = (function() {
             // raise "script has become unresponsive" errors.
             setTimeout(function() {
               jwcrypto.assertion.sign(
-                {}, {audience: audience, expiresAt: expirationDate},
+                payload,
+                {audience: audience, expiresAt: expirationDate},
                 sk,
                 function(err, signedAssertion) {
                   assertion = jwcrypto.cert.bundle([idInfo.cert], signedAssertion);
