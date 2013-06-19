@@ -118,7 +118,9 @@
       // first, check the required email field, if that is not specified, go
       // check if an email is associated with this site. If that is not
       // available, there is not enough information to continue.
-      var requiredEmail = options.requiredEmail || storage.site.get(origin, "email");
+      var requiredEmail = options.requiredEmail
+                       || storage.site.get(options.origin, "email")
+                       || storage.site.get(origin, "email");
       if(requiredEmail) {
         getSilent(origin, requiredEmail, complete);
       }
