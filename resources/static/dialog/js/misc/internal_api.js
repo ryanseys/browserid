@@ -122,7 +122,7 @@
                        || storage.site.get(options.origin, "email")
                        || storage.site.get(origin, "email");
       if(requiredEmail) {
-        getSilent(origin, requiredEmail, complete);
+        getSilent(origin, requiredEmail, complete, options.payload);
       }
       else {
         complete();
@@ -158,7 +158,7 @@
   /*
    * Get an assertion without user interaction - internal use
    */
-  function getSilent(origin, email, callback) {
+  function getSilent(origin, email, callback, payload) {
     function complete(assertion) {
       assertion = assertionObjectToString(assertion);
       callback && callback(assertion || null);
@@ -171,7 +171,7 @@
       if(authenticated) {
         user.getAssertion(email, user.getOrigin(), function(assertion) {
           complete(assertion || null);
-        }, complete.curry(null));
+        }, complete.curry(null), payload);
       }
       else {
         complete(null);
