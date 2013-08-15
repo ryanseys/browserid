@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <iframe id="com_frame" src="/communication_iframe"></iframe>
+  </head>
+  <body>
+    <!-- XFrame Options DENY ALL -->
+    <script>
+      // this is the origin of this loaded file
+      var persona_origin = 'http://127.0.0.1:10002';
+
+      window.addEventListener('rtcmessage', function(e) {
+        var message;
+        try {
+          message = JSON.parse(e.detail);
+        }
+        catch(err) {
+          return postMessage(JSON.stringify({ type : "ERROR", error: "Could not parse message" }), persona_origin);
+        }
+
+        if(message.type == 'SIGN') {
+          var stringifiedOptions = JSON.stringify({
+            silent: true,
+            origin: message.origin,
+            payload: { extra : { webrtc: { fingerprint : message.message }}}
+          });
+
+          var callback = function (assertion) {
+            var response;
+            if(assertion) {
+              response = JSON.stringify({
+                type: 'SUCCESS',
+                id: message.id,
+                message: {
+                  idp: {
+                    domain: persona_origin,
+                    protocol: "browserid"
+                  },
+                  assertion: assertion
+                }
+              });
+            }
+            else {
+              response = JSON.stringify({
+                type: 'ERROR',
+                id: message.id,
+                error: 'User not logged in to ' + message.origin
+              });
+            }
+
+            return this.postMessage(response, persona_origin);
+          }.bind(this);
+
+          com_frame.contentWindow.BrowserID.internal.get(
+            "rtcweb://peerconnection",
+            callback,
+            stringifiedOptions
+          );
+        }
+        else if(message.type == 'VERIFY') {
+          var assertion = message.message;
+          var assertion_payload = null;
+          var assertion_aud = null;
+          try {
+            var obj = JSON.parse(window.atob(assertion.split("~")[1].split('.')[1]));
+            // obj = { "fingerprint" : "DE:AD:BE:EF", "exp" : 1372890745118, "aud" : "rtcweb://peerconnection" }
+            assertion_payload = obj.extra.webrtc.fingerprint;
+            assertion_aud = obj.aud;
+          }
+          catch(e) {
+            // keep original null values
+          }
+
+          var body = JSON.stringify({
+            assertion: assertion,
+            audience: assertion_aud
+          });
+
+          var req = new XMLHttpRequest();
+          req.open('POST', "/verify", true);
+          req.responseType = 'json';
+          req.setRequestHeader('Content-Type', 'application/json');
+          req.mozBackgroundRequest = true;
+
+          req.onload = function idpChannel_verify_onload() {
+            var response = req.response;
+            var msg = {};
+            // The 'error' message is not in the spec.
+            // Leaving it in for now, so we can debug more easily
+            if (req.status === 200) {
+              if (response) {
+                if (response.status === "okay") {
+                  msg = {
+                    type: "SUCCESS",
+                    id: message.id,
+                    message: {
+                      identity: {
+                        name: response.email,
+                        displayname: ""         // not something persona knows yet
+                      },
+                      request_origin: assertion_aud,
+                      contents: assertion_payload
+                    }
+                  };
+                } else { // not "okay"
+                  msg = {
+                    type: "ERROR",
+                    id: message.id,
+                    error: response.reason
+                  };
+                }
+              } else { // no response
+                msg = {
+                  type: "ERROR",
+                  id: message.id,
+                  error: "Server response was " + typeof response
+                };
+              }
+            }
+            else { // status != 200
+              msg = {
+                type: "ERROR",
+                id: message.id,
+                error: "Server responded with code " + req.status
+              };
+            }
+            return postMessage(JSON.stringify(msg), );
+          }.bind(this);
+
+          req.onerror = function() {
+            return postMessage(JSON.stringify({
+              type: "ERROR",
+              id: message.id,
+              error: "Request error" + req.status + ":" + req.statusText
+            }), persona_origin);
+          }.bind(this);
+
+          req.send(body);
+        }
+        else {
+          return postMessage(JSON.stringify({
+            type : "ERROR",
+            message: "Unrecognized type"
+          }), persona_origin);
+        }
+      });
+
+      com_frame.onload = function() {
+        postMessage(JSON.stringify({ type : "READY" }), persona_origin);
+      }
+    </script>
+  </body>
+</html>
