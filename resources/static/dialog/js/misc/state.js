@@ -101,10 +101,9 @@ BrowserID.State = (function() {
         // This is not a cancelable authentication.  mustAuth is set
         // after a user verifies an address but is not authenticated
         // to the password level.
-        redirectToState("authenticate_specified_email", {
+        redirectToState("authenticate", {
           email: self.stagedEmail,
-          mustAuth: info.mustAuth,
-          cancelable: !info.mustAuth
+          email_mutable: false
         });
       }
       else {
@@ -151,11 +150,11 @@ BrowserID.State = (function() {
       if (info.email && info.type === "primary") {
         // this case is where a users is returning to the dialog from
         // authentication with a primary.  Elsewhere in
-        // code we key off of whether .primaryVerificationInfo is
+        // code we key off of whether .postIdPVerificationInfo is
         // set to behave differently the first time the dialog is
         // loaded vs. when a user returns to the dialog after auth with
         // primary.
-        self.primaryVerificationInfo = info;
+        self.postIdPVerificationInfo = info;
         redirectToState("primary_user", info);
       }
       else {
@@ -185,21 +184,6 @@ BrowserID.State = (function() {
       });
 
       startAction("doAuthenticate", info);
-    });
-
-    handleState("authenticate_specified_email", function(msg, info) {
-      // user must authenticate with their password, kick them over to
-      // the required email screen to enter the password.
-      startAction("doAuthenticateWithRequiredEmail", {
-        email: info.email,
-        secondary_auth: true,
-        cancelable: ("cancelable" in info) ? info.cancelable : true,
-        // This is a user is already authenticated to the assertion
-        // level who has chosen a secondary email address from the
-        // pick_email screen. They would have been shown the
-        // siteTOSPP there.
-        siteTOSPP: false
-      });
       complete(info.complete);
     });
 
@@ -276,8 +260,8 @@ BrowserID.State = (function() {
       }
       else if(self.newFxAccountEmail) {
         startAction(false, "doStageUser", info);
-// TODO         startAction(false, "doStageResetPassword", info); ???
       }
+      complete(info.complete);
     });
 
     handleState("user_staged", handleEmailStaged.curry("doConfirmUser"));
@@ -331,7 +315,7 @@ BrowserID.State = (function() {
     });
 
     handleState("primary_user_unauthenticated", function(msg, info) {
-      /*jshint newcap:false*/
+     /*jshint newcap:false*/
       _.extend(info, {
         add: !!self.addPrimaryUser,
         email: self.email,
@@ -339,19 +323,29 @@ BrowserID.State = (function() {
         idpName: info.idpName || URLParse(info.auth_url).host
       });
 
-      // If .primaryVerificationInfo is set, that means the user is
+      // If .postIdPVerificationInfo is set, that means the user is
       // returning to the dialog after authentication with their IdP.
       // When provisioning fails and:
-      // 1. it's the first provisioning attempt - we send the user to
+      // 1. the user did not cancel - Perhaps 3rd party
+      //    cookies are disabled. Show some messaging.
+      // 2. it's the first provisioning attempt - we send the user to
       //    authentication with their IdP
-      // 2. it's the second provisioning attempt - we sent the user back
+      // 3. it's the second provisioning attempt - we sent the user back
       //    to the proper screen to pick a new email address.
       // related to issue #2339
-      if (self.primaryVerificationInfo) {
-        self.primaryVerificationInfo = null;
-        if (info.add) {
-          // Add the pick_email in case the user cancels the add_email screen.
-          // The user needs something to go "back" to.
+      var postIdPVerificationInfo = self.postIdPVerificationInfo;
+      if (postIdPVerificationInfo) {
+
+        self.postIdPVerificationInfo = null;
+        if (!postIdPVerificationInfo.cancelled) {
+          // user did not cancel at the IdP, yet upon return, there was an
+          // error. Show some messaging.
+          startAction("doPrimaryUserNotProvisioned", info);
+          complete(info.complete);
+        }
+        else if (postIdPVerificationInfo.add) {
+          // Add the pick_email in case the user cancels the add_email
+          // screen. The user needs something to go "back" to.
           redirectToState("pick_email");
           redirectToState("add_email", info);
         }
@@ -363,6 +357,7 @@ BrowserID.State = (function() {
         startAction("doVerifyPrimaryUser", info);
         complete(info.complete);
       }
+
     });
 
     handleState("primary_user_authenticating", function(msg, info) {
@@ -437,7 +432,7 @@ BrowserID.State = (function() {
           // the user's account is being upgraded, we know they do not have
           // a cert. They may be able to provision with their IdP, but we want
           // them to see a nice message. Make them verify with their primary.
-          startAction("doVerifyPrimaryUser", addressInfo);
+          redirectToState("primary_user_unauthenticated", addressInfo);
         }
         else if (addressInfo.type === "primary") {
           // If the email is a primary and the cert is not available,
@@ -455,6 +450,7 @@ BrowserID.State = (function() {
             redirectToState("stage_transition_to_secondary", info);
           }
           else {
+            addressInfo.email_mutable = false;
             redirectToState("authenticate", addressInfo);
           }
         }
@@ -473,8 +469,9 @@ BrowserID.State = (function() {
           return user.checkAuthentication(function(authentication) {
             if (authentication !== "password") {
               // user must authenticate with their password, kick them over to
-              // the required email screen to enter the password.
-              redirectToState("authenticate_specified_email", addressInfo);
+              // the authenticate screen to enter the password.
+              addressInfo.email_mutable = false;
+              redirectToState("authenticate", addressInfo);
             }
             else {
               redirectToState("email_valid_and_ready", addressInfo);
@@ -557,7 +554,7 @@ BrowserID.State = (function() {
         storage.site.set(user.getOrigin(), "logged_in", self.email);
 
         mediator.publish("kpi_data", { orphaned: false });
-        startAction("doAssertionGenerated", {
+        startAction("doCompleteSignIn", {
           assertion: info.assertion,
           email: self.email
         });
@@ -589,6 +586,7 @@ BrowserID.State = (function() {
       // address is a primary address, #2 occurs if the address is a secondary
       // and the verification email has been sent.
       startAction("doAddEmail", info);
+      complete(info.complete);
     });
 
     handleState("stage_email", function(msg, info) {

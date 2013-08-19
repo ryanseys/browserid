@@ -229,7 +229,7 @@ BrowserID.Mocks.xhr = (function() {
       "get /wsapi/address_info?email=registered%40testuser.com&issuer=default secondaryTransitionPassword": { type: "secondary", state: "transition_no_password", normalizedEmail: "registered@testuser.com" },
       "get /wsapi/address_info?email=REGISTERED%40TESTUSER.COM&issuer=default secondaryTransitionPassword": { type: "secondary", state: "transition_no_password", normalizedEmail: "registered@testuser.com" },
       "get /wsapi/address_info?email=registered%40testuser.com&issuer=default primaryTransition": { type: "primary", state: "transition_to_primary", auth: "https://auth_url", prov: "https://prov_url", normalizedEmail: "registered@testuser.com" },
-      "get /wsapi/address_info?email=testuser%40testuser.com&issuer=default primaryTransition": { type: "primary", state: "transition_to_primary", auth: "https://auth_url", prov: "https://prov_url", normalizedEmail: "registered@testuser.com" },
+      "get /wsapi/address_info?email=testuser%40testuser.com&issuer=default primaryTransition": { type: "primary", state: "transition_to_primary", auth: "https://auth_url", prov: "https://prov_url", normalizedEmail: "testuser@testuser.com" },
       "get /wsapi/address_info?email=registered%40testuser.com&issuer=default primaryOffline": { type: "primary", state: "offline", auth: "https://auth_url", prov: "https://prov_url", normalizedEmail: "registered@testuser.com" },
 
       "get /wsapi/address_info?email=testuser%40testuser.com&issuer=fxos_issuer valid": { type: "secondary", state: "known", normalizedEmail: "testuser@testuser.com" },
@@ -254,7 +254,15 @@ BrowserID.Mocks.xhr = (function() {
       "post /wsapi/prolong_session ajaxError": undefined,
       "post /wsapi/interaction_data valid": { success: true },
       "post /wsapi/interaction_data throttle": 413,
-      "post /wsapi/interaction_data ajaxError": undefined
+      "post /wsapi/interaction_data ajaxError": undefined,
+      // request used to test the abortAll functionality of xhr.js
+      "get /slow_request valid": function(xhrObj) {
+        xhrObj._delayTimeout = setTimeout(function() {
+          if (xhrObj._request.success) {
+            xhrObj._request.success({ success: true });
+          }
+        }, 1000);
+      }
     },
 
     setContextInfo: function(field, value) {
@@ -281,6 +289,24 @@ BrowserID.Mocks.xhr = (function() {
     ajax: function(request) {
       //console.log("ajax request");
       var type = request.type ? request.type.toLowerCase() : "get";
+
+
+      var xhrObj = {
+        "_request": request,
+        "_response": response,
+        abort: function() {
+          if (this._delayTimeout) {
+            clearTimeout(this._delayTimeout);
+            this._delayTimeout = null;
+            delete this._delayTimeout;
+          }
+
+          if (this._request.error) {
+            xhrObj.statusText = "aborted";
+            this._request.error(xhrObj, 0, "");
+          }
+        }
+      };
 
       this.request = request = _.extend(request, {
         type: type
@@ -313,7 +339,7 @@ BrowserID.Mocks.xhr = (function() {
       }
 
       if (typeofResponse === "function") {
-        response(request.success);
+        response(xhrObj);
       }
       else if (!(typeofResponse === "number" || typeofResponse === "undefined")) {
         if (typeofResponse === "object") {
@@ -333,8 +359,12 @@ BrowserID.Mocks.xhr = (function() {
       else if (request.error) {
         // Invalid response - either invalid URL, invalid GET/POST or
         // invalid responseName
-        request.error({ status: response || 400, responseText: "response text" }, "errorStatus", "errorThrown");
+        xhrObj.status = response || "errorStatus";
+        xhrObj.responseText = "response text";
+        request.error(xhrObj, xhrObj.status, "errorThrown");
       }
+
+      return xhrObj;
     }
   };
 

@@ -39,7 +39,7 @@ var argv = require('optimist')
   .check(function(a) {
     if (!a.parallel) a.parallel = parseInt(process.env.RUNNERS, 10) || 10;
   })
-  .describe('platform', 'the browser/os to test (globs supported)')
+  .describe('platform', 'the browser/os to test (globs and csv supported)')
   .alias('iterations', 'i')
   .describe('iterations', 'the number of times to repeat specified tests')
   .default("iterations", "1")
@@ -145,16 +145,24 @@ function startTesting() {
   function getTestedPlatforms(platform_glob) {
     var platforms = {};
 
-    Object.keys(supported_platforms).forEach(function(p) {
-      if (glob(p, platform_glob)) platforms[p] = supported_platforms[p];
-    });
+    // see if it's CSV (but don't match a glob brace expansion)
+    if (platform_glob.indexOf(',') > 0 && platform_glob.indexOf('{') !== 0) {
+      var platformList = platform_glob.split(',');
+      Object.keys(supported_platforms).forEach(function(p) {
+        if (platformList.indexOf(p) !== -1) platforms[p] = supported_platforms[p];
+      });
+    } else {
+      Object.keys(supported_platforms).forEach(function(p) {
+        if (glob(p, platform_glob)) platforms[p] = supported_platforms[p];
+      });
+    }
 
     return platforms;
   }
 
   function getTheTests(platforms) {
     var testSet = test_finder.find(args.tests, '', '', args['ignore-tests']);
-    allTests = [];
+    var allTests = [];
 
     // make a copy of the test set for each platform, set the platform of each
     // test, and append the platform specific test set to overall list of
@@ -168,7 +176,7 @@ function startTesting() {
     }
     // handle multiple iterations
     var allTestsCopy = toolbelt.deepCopy(allTests);
-    for (var i = 1; i < parseInt(args.iterations); i++) {
+    for (var i = 1; i < parseInt(args.iterations, 10); i++) {
       allTests = allTests.concat(allTestsCopy);
     }
     return allTests;
@@ -224,7 +232,7 @@ function startTesting() {
     });
 
     testProcess.on('exit', function(code) {
-      var err = (code != 0 ? " (failed with exit code " + code + ")": null);
+      var err = (code !== 0 ? " (failed with exit code " + code + ")": null);
       done && done(err);
     });
   }
@@ -280,11 +288,26 @@ function startTesting() {
     }
   }
 
+  function setupSigIntHandler(aggregators) {
+    // Sometimes, when running tests interactively from the command line,
+    // things start going badly, and you don't want to wait for the end of the
+    // test to find out what was failing. So, on SIGINT, show the state of the
+    // aggregators before exiting.
+    if (process.platform === 'win32') return; // signals are not supported
+    process.on('SIGINT', function() {
+      if (!aggregators.length) return process.exit(1);
+      if (args.output === 'console') process.stdout.write("\n\n");
+      summarizeResultsAndExit(aggregators);
+    });
+  }
+
   function runTests() {
     var aggregators = [];
     var totalTests = tests.length;
     var completeTests = 0;
     var allProcessesExitedCleanly = true;
+
+    setupSigIntHandler(aggregators);
 
     function getAggregator() {
       var aggregator;
@@ -294,8 +317,8 @@ function startTesting() {
 
         // now if this is the console, let's output marks as tests start and complete
         if (args.output === 'console') {
-          aggregator.on('pass', function() { process.stdout.write(".") });
-          aggregator.on('fail', function() { process.stdout.write("!") });
+          aggregator.on('pass', function() { process.stdout.write("."); });
+          aggregator.on('fail', function() { process.stdout.write("!"); });
         }
       }
       return aggregator;
@@ -337,8 +360,8 @@ function startTesting() {
       successes += r.passed;
     });
     console.log("%s/%s tests passed%s", successes, total,
-                (successes != total) ? ", here are your failures:" : "");
-    if (successes != total) {
+                (successes !== total) ? ", here are your failures:" : "");
+    if (successes !== total) {
       aggregators.forEach(function(rp) {
         var r = rp.results();
         if (r.failed || r.unhandledMessages.length) {

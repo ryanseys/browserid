@@ -52,7 +52,6 @@ runner.run(module, {
       .wwin(CSS['dialog'].windowName)
       .wtype(CSS['dialog'].emailInput, primaryEmail)
       .wclick(CSS['dialog'].newEmailNextButton)
-      .wclick(CSS['dialog'].verifyWithPrimaryButton)
       .wclick(CSS['testidp.org'].loginButton)
       .wwin()
       .wtext(CSS['123done.org'].currentlyLoggedInEmail, function(err, text) {
@@ -67,12 +66,11 @@ runner.run(module, {
       .wclick(CSS['dialog'].useNewEmail)
       .wtype(CSS['dialog'].newEmail, secondPrimaryEmail)
       .wclick(CSS['dialog'].addNewEmailButton)
-      .wclick(CSS['dialog'].verifyWithPrimaryButton)
       .wclick(CSS['testidp.org'].loginButton)
       .wclickIfExists(CSS['dialog'].notMyComputerButton)
       .wwin()
       .wtext(CSS['123done.org'].currentlyLoggedInEmail, function(err, text) {
-        done(err || assert.equal(text, secondPrimaryEmail))
+        done(err || assert.equal(text, secondPrimaryEmail));
       });
   },
   //XXX This could be much more comprehensive by bringing up the dialog
@@ -83,5 +81,5 @@ runner.run(module, {
 },
 {
   suiteName: path.basename(__filename),
-  cleanup: function(done) { testSetup.teardown(done) }
+  cleanup: function(done) { testSetup.teardown(done); }
 });

@@ -133,6 +133,15 @@
       (isFennec ? undefined :
        "menubar=0,location=1,resizable=1,scrollbars=1,status=0,width=700,height=375");
 
+    // Chrome for iOS
+    //    - https://developers.google.com/chrome/mobile/docs/user-agent
+    // Windows Phone
+    //    - http://stackoverflow.com/questions/11381673/javascript-solution-to-detect-mobile-browser
+    var needsPopupFix = userAgent.match(/CriOS/) ||
+                        userAgent.match(/Windows Phone/);
+
+    var REQUIRES_WATCH = "WATCH_NEEDED";
+    var WINDOW_NAME = "__persona_dialog";
     var w;
 
     // table of registered observers
@@ -332,8 +341,9 @@
         warn("privacyPolicy ignored unless termsOfService also defined");
       }
 
-
       options.rp_api = getRPAPI();
+      var couldDoRedirectIfNeeded = (!needsPopupFix || api_called === 'request');
+
       // reset the api_called in case the site implementor changes which api
       // method called the next time around.
       api_called = null;
@@ -351,17 +361,30 @@
         return;
       }
 
-      if (!BrowserSupport.isSupported()) {
-        var reason = BrowserSupport.getNoSupportReason(),
-        url = "unsupported_dialog";
+      function isSupported() {
+        return BrowserSupport.isSupported() && couldDoRedirectIfNeeded;
+      }
+
+      function noSupportReason() {
+        var reason = BrowserSupport.getNoSupportReason();
+        if (!reason && !couldDoRedirectIfNeeded) {
+          return REQUIRES_WATCH;
+        }
+      }
+      
+      if (!isSupported()) {
+        var reason = noSupportReason();
+        var url = "unsupported_dialog";
 
         if(reason === "LOCALSTORAGE_DISABLED") {
           url = "cookies_disabled";
+        } else if (reason === REQUIRES_WATCH) {
+          url = "unsupported_dialog_without_watch";
         }
 
         w = window.open(
           ipServer + "/" + url,
-          null,
+          WINDOW_NAME,
           windowOpenOpts);
         return;
       }
@@ -370,11 +393,29 @@
       // don't do duplicative work
       if (commChan) commChan.notify({ method: 'dialog_running' });
 
+      function doPopupFix() {
+        if (commChan) {
+          return commChan.call({
+            method: 'redirect_flow',
+            params: JSON.stringify(options),
+            success: function() {
+              // use call/success so that we do not have to depend on
+              // the postMessage being synchronous.
+              window.location = ipServer + '/sign_in';
+            }
+          });
+        }
+      }
+
+      if (needsPopupFix) {
+        return doPopupFix();
+      }
+
       w = WinChan.open({
         url: ipServer + '/sign_in',
         relay_url: ipServer + '/relay',
         window_features: windowOpenOpts,
-        window_name: '__persona_dialog',
+        window_name: WINDOW_NAME,
         params: {
           method: "get",
           params: options
@@ -390,7 +431,18 @@
           if (!err && r && r.email) {
             commChan.notify({ method: 'loggedInUser', params: r.email });
           }
-          commChan.notify({ method: 'dialog_complete' });
+          // prevent the authentication status check if an assertion is
+          // generated in the dialog or the dialog returned with an error.
+          // This prevents .onmatch from being fired for:
+          // 1. assertion already generated in the dialog
+          // 2. user is signed in to the site, opens the dialog, then cancels
+          // the dialog without generating an assertion.
+          // See #3170 & #3701
+          var checkAuthStatus = !(err || r && r.assertion);
+          commChan.notify({
+            method: 'dialog_complete',
+            params: checkAuthStatus
+          });
         }
 
         // clear the window handle
@@ -461,6 +513,7 @@
         opts.tosURL = passedOptions.tosURL || undefined;
         opts.siteName = passedOptions.siteName || undefined;
         opts.siteLogo = passedOptions.siteLogo || undefined;
+        opts.backgroundColor = passedOptions.backgroundColor || undefined;
         // api_called could have been set to getVerifiedEmail already
         api_called = api_called || "get";
         if (checkDeprecated(passedOptions, "silent")) {

@@ -30,22 +30,22 @@
   <!--[if lt IE 9]>
     <%- cachify_css('/production/ie8_dialog.css') %>
   <![endif]-->
+  <link rel="shortcut icon" href=<%- cachify('/favicon.ico') -%>>
   <% /* the title comes from the server when the page is loaded.
          It still needs translated, so wrap it in its own gettext
      */ %>
   <title><%= format(gettext("Mozilla Persona: %s"), [gettext(title)]) %></title>
 </head>
-  <body class="loading">
+  <body <% if (showLoading) { %>class="loading"i<% } %>>
       <% if (useJavascript !== false && enable_development_menu) { %>
         <a href="#" id="showDevelopment">&nbsp;</a>
       <% } %>
-      <header id="header">
-         <h1><a class="home" target="_blank" href="/">Mozilla Persona Home</a></h1>
-      </header>
 
       <div id="content">
         <%- body %>
       </div>
+
+      <% if (showLoading) { %>
 
       <!-- the loading screen should take up the entire
            screen and not just within the borders of the content
@@ -61,9 +61,11 @@
         </div>
       </section>
 
+      <% } %>
+
 
       <footer>
-<span id="footerText"><%- format(gettext('<strong>Persona.</strong> Simplified sign-in, built by a non-profit. <a %s>Learn more&rarr;</a>'), [" href='/about' target='_blank'"]) %></span>
+<span id="footerText"><%- format(gettext('<strong>Mozilla Persona.</strong> Simplified sign-in by the non-profit behind Firefox. <a %s>Learn more&rarr;</a>'), [" href='/about' target='_blank'"]) %></span>
       </footer>
 
 

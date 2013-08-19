@@ -7,21 +7,22 @@
   "use strict";
 
   var bid = BrowserID,
-      xhr = bid.XHR,
+      XHR = bid.Modules.XHR,
+      xhr,
       transport = bid.Mocks.xhr,
       mediator = bid.Mediator,
       testHelpers = bid.TestHelpers;
 
-  module("common/js/xhr", {
+  module("common/js/modules/xhr", {
     setup: function() {
-      testHelpers.setup();
       transport.setDelay(0);
+      xhr = XHR.create();
       xhr.init({ transport: transport, time_until_delay: 50 });
+      testHelpers.setup({ xhr: xhr });
     },
 
     teardown: function() {
       testHelpers.teardown();
-      xhr.init({ transport: $, time_until_delay: 0 });
     }
   });
 
@@ -38,7 +39,7 @@
       completeInfo = info;
     });
 
-    xhr.get({
+    var req = xhr.get({
       url: "/wsapi/session_context",
       error: testHelpers.unexpectedXHRFailure,
       success: function(info) {
@@ -50,6 +51,8 @@
         start();
       }
     });
+
+    ok(req);
   });
 
   asyncTest("get with xhr error", function() {
@@ -100,6 +103,41 @@
     });
   });
 
+  asyncTest("post with missing CSRF token", function() {
+    var errorInfo;
+    mediator.subscribe("xhr_error", function(msg, info) {
+      errorInfo = info;
+    });
+
+    var completeInfo;
+    mediator.subscribe("xhr_complete", function(msg, info) {
+      completeInfo = info;
+    });
+
+    xhr.post({
+      url: "/wsapi/authenticate_user",
+      success: testHelpers.unexpectedSuccess,
+      error: function(info) {
+        ok(errorInfo);
+        equal(errorInfo.network.url, "/wsapi/authenticate_user");
+        equal(errorInfo.network.errorThrown,
+            "missing csrf token from POST request");
+
+        ok(info);
+        equal(info.network.url, "/wsapi/authenticate_user");
+        equal(info.network.errorThrown,
+            "missing csrf token from POST request");
+
+        ok(completeInfo);
+        equal(completeInfo.network.url, "/wsapi/authenticate_user");
+        equal(completeInfo.network.errorThrown,
+            "missing csrf token from POST request");
+
+        start();
+      }
+    });
+  });
+
   asyncTest("post with delay", function() {
     transport.setDelay(100);
 
@@ -113,7 +151,8 @@
       completeInfo = info;
     });
 
-    xhr.post({
+    var req = xhr.post({
+      data: { csrf: "csrf" },
       url: "/wsapi/authenticate_user",
       success: function() {
         ok(delayInfo, "xhr_delay called with delay info");
@@ -126,6 +165,8 @@
 
       error: testHelpers.unexpectedXHRFailure
     });
+
+    ok(req);
   });
 
   asyncTest("post with xhr error", function() {
@@ -142,6 +183,7 @@
     transport.useResult("ajaxError");
 
     xhr.post({
+      data: { csrf: "csrf" },
       url: "/wsapi/authenticate_user",
       error: function(info) {
         ok(errorInfo, "xhr_error called with delay info");
@@ -167,6 +209,7 @@
     });
 
     xhr.post({
+      data: { csrf: "csrf" },
       url: "/wsapi/authenticate_user",
       error: testHelpers.unexpectedXHRFailure,
       success: function() {
@@ -176,5 +219,79 @@
       }
     });
   });
+
+  asyncTest("abortAll aborts outstanding requests, triggers xhr_complete",
+      function() {
+    mediator.subscribe("xhr_complete", function(msg, info) {
+      equal(info.network.url, "/slow_request");
+      equal(info.xhr.statusText, "aborted");
+      start();
+    });
+
+    xhr.get({
+      url: "/slow_request",
+      error: testHelpers.unexpectedXHRFailure,
+      success: function() { ok(false); }
+    });
+
+    xhr.abortAll();
+  });
+
+  asyncTest("success responses not called after module stops", function() {
+    xhr.get({
+      url: "/wsapi/session_context",
+      error: testHelpers.unexpectedXHRFailure,
+      // the module is stopped, this should not be called.
+      success: testHelpers.unexpectedSuccess
+    });
+
+    xhr.stop();
+
+    setTimeout(start, 100);
+  });
+
+  asyncTest("error responses not called after module stops", function() {
+    transport.useResult("contextAjaxError");
+    xhr.get({
+      url: "/wsapi/session_context",
+      error: testHelpers.unexpectedXHRFailure,
+      // the module is stopped, this should not be called.
+      success: testHelpers.unexpectedSuccess
+    });
+
+    xhr.stop();
+
+    setTimeout(start, 100);
+  });
+
+  asyncTest("xhr_delay not called for completed request", function() {
+    transport.setDelay(25);
+
+    var delayInfo;
+    mediator.subscribe("xhr_delay", function(msg, info) {
+      delayInfo = info;
+    });
+
+    var completeInfo;
+    mediator.subscribe("xhr_complete", function(msg, info) {
+      completeInfo = info;
+    });
+
+    var req = xhr.get({
+      url: "/wsapi/session_context",
+      error: testHelpers.unexpectedXHRFailure,
+      success: function(info) {
+      }
+    });
+
+    // the delay timer fires after 50ms, wait for 100ms to check.
+    setTimeout(function() {
+      testHelpers.testUndefined(delayInfo);
+      testHelpers.testNotUndefined(completeInfo);
+      start();
+    }, 100);
+
+  });
+
 
 }());

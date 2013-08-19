@@ -219,7 +219,7 @@
 
     storage.idpVerification.clear();
     info = storage.idpVerification.get();
-    equal(typeof info, "undefined");
+    testHelpers.testUndefined(info);
   });
 
   test("idpVerification - clear old info", function() {
@@ -237,30 +237,24 @@
 
     storage.idpVerification.clear();
     var info = storage.idpVerification.get("expired");
-    equal(typeof info, "undefined");
+    testHelpers.testUndefined(info);
   });
 
-  // BEGIN TRANSITION CODE
-  test("upgradeLoggedInInfo upgrades old loggedInInfo and removes namespace",
-      function() {
-      localStorage.loggedIn = JSON.stringify({
-        'testrp.com': 'testuser@testuser.com'
-      });
-
-      storage.upgradeLoggedInInfo();
-      equal(storage.site.get("testrp.com", "logged_in"),
-          'testuser@testuser.com');
-
-      equal(localStorage.getItem('loggedIn'), null);
-
-      try {
-        // make sure re-invoking upgrade path does not cause an error.
-        storage.upgradeLoggedInInfo();
-      } catch(e) {
-        ok(false, "unexpected error");
+  test("rpRequest functions, set, get, clear", function() {
+    storage.rpRequest.set({
+      origin: "https://testuser.com",
+      params: {
+        returnTo: "/"
       }
+    });
+
+    var rpRequestInfo = storage.rpRequest.get();
+    equal(rpRequestInfo.origin, "https://testuser.com");
+
+    storage.rpRequest.clear();
+    rpRequestInfo = storage.rpRequest.get();
+    testHelpers.testUndefined(rpRequestInfo);
   });
-  // END TRANSITION CODE
 
 }());
 

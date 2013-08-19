@@ -74,8 +74,8 @@ function hasProperCacheHeaders(path) {
       assert.strictEqual(r.statusCode, 200);
       // check X-Frame-Option headers
       hasProperFramingHeaders(r, path);
-      // ensure public, max-age=0
-      assert.strictEqual(r.headers['cache-control'], 'public, max-age=0');
+      // ensure public, max-age=0, must-revalidate
+      assert.strictEqual(r.headers['cache-control'], 'public, max-age=0, must-revalidate');
       // the behavior of combining a last-modified date and an etag is undefined by
       // rfc2616, so let's always use ETags, and ignore last modified date.
       assert.ok(r.headers['etag'])
@@ -133,6 +133,8 @@ suite.addBatch({
   '/sign_in': hasProperCacheHeaders('/sign_in'),
   '/communication_iframe': hasProperCacheHeaders('/communication_iframe'),
   '/unsupported_dialog': hasProperCacheHeaders('/unsupported_dialog'),
+  '/unsupported_dialog_without_watch':
+      hasProperCacheHeaders('/unsupported_dialog_without_watch'),
   '/cookies_disabled': hasProperCacheHeaders('/cookies_disabled'),
   '/relay': hasProperCacheHeaders('/relay'),
   '/about': hasProperCacheHeaders('/about'),

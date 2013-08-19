@@ -10,11 +10,8 @@
       modules = bid.Modules,
       user = bid.User,
       network = bid.Network,
-      mediator = bid.Mediator,
-      xhr = bid.XHR;
+      mediator = bid.Mediator;
 
-  // A request that takes more than 10 seconds is considered delayed.
-  xhr.init({ time_until_delay: 10 * 1000 });
   network.init();
   user.init();
 
@@ -44,10 +41,10 @@
       moduleManager.register("check_registration", modules.CheckRegistration);
       moduleManager.register("is_this_your_computer", modules.IsThisYourComputer);
       moduleManager.register("pick_email", modules.PickEmail);
-      moduleManager.register("required_email", modules.RequiredEmail);
       moduleManager.register("verify_primary_user", modules.VerifyPrimaryUser);
       moduleManager.register("provision_primary_user", modules.ProvisionPrimaryUser);
       moduleManager.register("primary_user_provisioned", modules.PrimaryUserProvisioned);
+      moduleManager.register("primary_user_not_provisioned", modules.PrimaryUserNotProvisioned);
       moduleManager.register("primary_offline", modules.PrimaryOffline);
       moduleManager.register("generate_assertion", modules.GenerateAssertion);
       moduleManager.register("xhr_delay", modules.XHRDelay);
@@ -55,6 +52,7 @@
       moduleManager.register("set_password", modules.SetPassword);
       moduleManager.register("rp_info", modules.RPInfo);
       moduleManager.register("inline_tospp", modules.InlineTosPp);
+      moduleManager.register("complete_sign_in", modules.CompleteSignIn);
 
       moduleManager.start("xhr_delay");
       moduleManager.start("xhr_disable_form");

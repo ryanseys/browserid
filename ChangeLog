@@ -1,5 +1,51 @@
 current train:
 
+train-2013.08.15
+	* Relax restrictions on siteLogo - allow siteLogo from any https URL or image dataURI: #3705, #3743
+	* Allow CSV list of platforms when running Selenium tests: #3748
+	* Fix mobile layout of unsupported_dialog and cookies_disabled: #3783, #3784, #3785
+	* Record frontend test details in a temp file when run from Selenium tests: #3780
+	* Fix "noSuchWindow" error for new Chrome Selenium driver: #3683, #3788
+	* Fix invalid CSS: #3765, #3791
+	* Ensure include.orig.js is available on the staging and production servers: #3212, #3795
+	* Refactorings and other improvements: #3751, #3683, #3750, #3758, #3759, #3788, #3774
+
+train-2013.07.31
+  * Nicely warn primary IdP users that third-party cookies must be enabled: #3520
+  * Update copy and design of persona emails: #1935
+  * Fix bugs in onmatch and oncancel callbacks: #3701, #3170, #3463
+  * Properly handle primaries when entered with uppercase initial letter in domain: #3728, #3741, #3739, #3729
+  * Improvements to the dialog flow: #3708, #3689, #3609, #3671, #3691
+  * Visual tweaks: #3668, #3677, #3668, #3573, #3662
+  * Test improvements: #3733, #3720, #3719, #3665
+  * Refactorings and other minor improvements: #3694, #3740, #3666, #3695, #3718, #3697, #3630, #3670
+
+train-2013.07.17:
+  * Simplify tooltip copy and replace tooltips with inline notifications: #3154, #3607
+  * [FXOS] Make TOS/PP links same size as surrounding text: #3634
+  * Ensure dialog hides the 'checking with your email provider' screen after that check completes: #3638
+  * Remove eval() from i18n workflow by passing i18n-abide .js, not .json files: #3672, #2501
+  * Fix lockdown & rpm build errors by bumping i18n-abide version number to semver-compatible string: #3658, #3639
+  * Refactor xhr code into a module, removing global state, and squashing an intermittent unit testing bug: #3647
+  * Prevent Chrome from logging spurious KPI errors by aborting in-flight xhrs on page unload: #2423, #3618
+  * On each Travis-CI run, record linux, mysql, and phantomjs versions for future reference: #3626
+
+train-2013.07.03:
+  * [FXOS] Add support for primary IdPs to FirefoxOS: #3572, #3592, #3566, #3567
+  * w00t! Enable RP dialog custom branding with new parameter, 'backgroundColor': #3589
+  * Add Spanish translation of TOS/PP & infrastructure to support additional TOS/PP l10n: #3604
+  * Fix another occurrence of 'native' causing problems on old Android: #3595
+  * Display RP name, not 'undefined', in primary-upgrade dialog screen: #3621
+  * If reporting a custom error type to KPIs, use a meaningful field: #3584
+  * Redefine 'undefined' in case the underlying page broke it: #3598
+  * If a domain has transitioned between primary/secondary, don't reuse the old cert: #3515
+  * If a primary can't be reached, don't cache this result--let the user immediately retry: #3155
+  * Adjust caching headers on dynamically-generated pages to force revalidation: #3547, #3582
+  * Add 90 day future expires header to favicon.ico: #2482
+  * Redirect legacy endpoints /signin, /signup, /forgot to homepage: #3467
+  * Improve Travis-CI docs: #3599
+  * Add SIGINT handler, so interrupted Selenium tests immediately dump useful output on POSIX systems: #3570
+
 train-2013.06.19:
   * Correctly transition users from primary IdP-based to fallback IdP-based accounts: #3551
   * Bump version in package.json and add additional metadata: #3555

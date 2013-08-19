@@ -4,6 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/*jshint sub: true */
+
 const
 path = require('path'),
 assert = require('../lib/asserts.js'),
@@ -95,7 +97,6 @@ runner.run(module, {
       .wwin(CSS['dialog'].windowName)
       .wtype(CSS['dialog'].emailInput, firstPrimaryEmail)
       .wclick(CSS['dialog'].newEmailNextButton)
-      .wclick(CSS['dialog'].verifyWithPrimaryButton)
       .wclick(CSS['testidp.org'].loginButton)
       .wwin()
       .wtext(CSS['123done.org'].currentlyLoggedInEmail, function(err, text) {
@@ -111,7 +112,6 @@ runner.run(module, {
       .wclick(CSS['dialog'].useNewEmail)
       .wtype(CSS['dialog'].newEmail, secondPrimaryEmail)
       .wclick(CSS['dialog'].addNewEmailButton)
-      .wclick(CSS['dialog'].verifyWithPrimaryButton)
       .wclick(CSS['testidp.org'].loginButton)
       .wwin()
       .wtext(CSS['123done.org'].currentlyLoggedInEmail, function(err, text) {
@@ -210,8 +210,7 @@ runner.run(module, {
       // the user will still be logged in to testidp.org under the
       // secondPrimaryEmail, so try logging in using the firstPrimaryEmail
       .wtype(CSS['dialog'].emailInput, firstPrimaryEmail)
-      .wclick(CSS['dialog'].newEmailNextButton)
-      .wclick(CSS['dialog'].verifyWithPrimaryButton, done);
+      .wclick(CSS['dialog'].newEmailNextButton, done);
   }
 },
 {

@@ -9,8 +9,6 @@
       storage = bid.Storage,
       interactionData = bid.Models.InteractionData;
 
-
-
   // Initialize all localstorage values to default values.  Neccesary for
   // proper sync of IE8 localStorage across multiple simultaneous
   // browser sessions.
@@ -45,6 +43,16 @@
   function checkAndEmit(oncomplete) {
     if (pause) return;
 
+    function onError() {
+      chan.notify({ method: 'logout' });
+      loggedInUser = null;
+      oncomplete && oncomplete();
+    }
+
+    // All XHR requests are aborted when the user browsers away from the RP.
+    // Outstanding calls to cookiesEnabled (which calls /wsapi/session_context)
+    // will be aborted, the onError callback will not be invoked. All other XHR
+    // errors will call onError. See issues #2423, #3619
     network.cookiesEnabled(function(enabled) {
       if (!enabled) {
         // cookies are disabled, call onready and do nothing more.
@@ -72,12 +80,8 @@
           loggedInUser = null;
         }
         oncomplete && oncomplete();
-      }, function(err) {
-        chan.notify({ method: 'logout' });
-        loggedInUser = null;
-        oncomplete && oncomplete();
-      });
-    });
+      }, onError);
+    }, onError);
   }
 
   function watchState() {
@@ -115,11 +119,20 @@
     }
   });
 
+  chan.bind("redirect_flow", function(trans, params) {
+    setRemoteOrigin(trans.origin);
+    storage.rpRequest.set({
+      origin: remoteOrigin,
+      params: JSON.parse(params)
+    });
+    return true;
+  });
+
   chan.bind("dialog_running", function(trans, params) {
     pause = true;
   });
 
-  chan.bind("dialog_complete", function(trans, params) {
+  chan.bind("dialog_complete", function(trans, checkAuthStatus) {
     pause = false;
     // The dialog has closed, so that we get results from users who only open
     // the dialog a single time, send the KPIs immediately. Note, this does not
@@ -141,9 +154,11 @@
       }
     } catch(e) {}
 
-    // the dialog running can change authentication status,
-    // lets manually purge our network cache
-    network.clearContext();
-    checkAndEmit();
+    if (checkAuthStatus) {
+      // the dialog running can change authentication status,
+      // lets manually purge our network cache
+      user.clearContext();
+      checkAndEmit();
+    }
   });
 }());

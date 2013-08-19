@@ -16,7 +16,7 @@ BrowserID.Modules.Authenticate = (function() {
       dom = bid.DOM,
       lastEmail = "",
       addressInfo,
-      hints = ["returning","start","addressInfo"],
+      hints = ["returning", "start", "transitionToSecondary", "addressInfo"],
       DISABLED_ATTRIBUTE = "disabled",
       SUBMIT_DISABLED_CLASS = "submit_disabled",
       CONTENTS_SELECTOR = "#formWrap .contents",
@@ -29,12 +29,8 @@ BrowserID.Modules.Authenticate = (function() {
       AUTHENTICATION_CLASS = "authentication",
       CONTINUE_BUTTON_SELECTOR = ".continue",
       FORM_CLASS = "form",
-      AUTHENTICATION_LABEL = "#authentication_form label[for=authentication_email]",
-      ENTER_EMAIL_LABEL = "#authentication_form .label.enter_email",
-      EMAIL_LABEL = "#authentication_form .label.email_state",
-      TRANSITION_TO_SECONDARY_LABEL = "#authentication_form .label.transition_to_secondary",
-      PASSWORD_LABEL = "#authentication_form .label.password_state",
       CANCEL_PASSWORD_SELECTOR = ".cancelPassword",
+      EMAIL_IMMUTABLE_CLASS = "emailImmutable",
       IDP_SELECTOR = "#authentication_form .authentication_idp_name",
       PERSONA_INTRO_SELECTOR = ".persona_intro",
       PERSONA_URL = "https://login.persona.org",
@@ -52,10 +48,19 @@ BrowserID.Modules.Authenticate = (function() {
 
   function hasPassword(info) {
     /*jshint validthis:true*/
-    return (info && info.email && info.type === "secondary" &&
-      (info.state === "known" ||
-       info.state === "transition_to_secondary" ||
-       info.state === "unverified" && this.allowUnverified));
+    var self = this;
+    /*
+     * If this is is a required email, we are making the assumption
+     * that it is a secondary address and has a password. The only two ways to
+     * get here with emailSpecified are post-reset-password where the email
+     * verification occurs in a second browser and when signed in to the
+     * assertion level and then choose a secondary backed address.
+     */
+    return (self.emailSpecified && !self.emailMutable) ||
+              (info && info.email && info.type === "secondary" &&
+                  (info.state === "known" ||
+                   info.state === "transition_to_secondary" ||
+                   info.state === "unverified" && self.allowUnverified));
   }
 
   function isNewPersonaAccount(info) {
@@ -67,7 +72,7 @@ BrowserID.Modules.Authenticate = (function() {
     return (info.state === "unknown" && !user.isDefaultIssuer());
   }
 
-  function initialState(info) {
+  function chooseInitialState(info) {
     /*jshint validthis: true*/
     var self=this;
     if (hasPassword.call(self, info)) {
@@ -75,7 +80,6 @@ BrowserID.Modules.Authenticate = (function() {
       enterPasswordState.call(self, info.ready);
     }
     else {
-      showHint("start");
       enterEmailState.call(self, info.ready);
     }
   }
@@ -152,7 +156,10 @@ BrowserID.Modules.Authenticate = (function() {
         email = getEmail();
 
     if (email) {
-      self.close(msg, { email: email }, { email: email });
+      self.close(msg, { email: email }, {
+        email: email,
+        email_mutable: true
+      });
     }
 
     complete(callback);
@@ -165,7 +172,8 @@ BrowserID.Modules.Authenticate = (function() {
         self = this;
 
     if (email && pass) {
-      dialogHelpers.authenticateUser.call(self, email, pass, function(authenticated) {
+      dialogHelpers.authenticateUser.call(self, email, pass,
+          function(authenticated) {
         if (authenticated) {
           self.close("authenticated", {
             email: email,
@@ -207,7 +215,7 @@ BrowserID.Modules.Authenticate = (function() {
 
     // If we are already in the enterEmailState, skip out or else we mess with
     // auto-completion.
-    if (self.submit === checkEmail) return;
+    if (self.submit === checkEmail) return complete(done);
     self.submit = checkEmail;
 
     // If we are signing in to the Persona main site, do not show
@@ -216,7 +224,6 @@ BrowserID.Modules.Authenticate = (function() {
       dom.hide(PERSONA_INTRO_SELECTOR);
     }
 
-    dom.setInner(AUTHENTICATION_LABEL, dom.getInner(EMAIL_LABEL));
     showHint("start");
     dom.focus(EMAIL_SELECTOR);
     self.publish("enter_email");
@@ -231,13 +238,14 @@ BrowserID.Modules.Authenticate = (function() {
     dom.setInner(PASSWORD_SELECTOR, "");
 
     self.submit = authenticate;
-    var labelSelector = (addressInfo.state === "transition_to_secondary") ? TRANSITION_TO_SECONDARY_LABEL : PASSWORD_LABEL;
-    if (labelSelector === TRANSITION_TO_SECONDARY_LABEL) {
+
+    var state = "returning";
+    if (addressInfo.state === "transition_to_secondary") {
+      state = "transitionToSecondary";
       dom.setInner(IDP_SELECTOR, helpers.getDomainFromEmail(addressInfo.email));
     }
-    dom.setInner(AUTHENTICATION_LABEL, dom.getInner(labelSelector));
 
-    showHint("returning", function() {
+    showHint(state, function() {
       dom.focus(PASSWORD_SELECTOR);
       self.publish("enter_password", addressInfo);
       // complete must be called after focus or else the front end unit tests
@@ -245,6 +253,22 @@ BrowserID.Modules.Authenticate = (function() {
       // because the element we are trying to focus was no longer available.
       complete(callback);
     });
+  }
+
+  function cancelPassword() {
+    /*jshint validthis: true*/
+    var self = this;
+    // If there is an immutable emailSpecified, the user is coming to the
+    // authentication screen to authenticate with a specific email address.
+    // This is probably a post-verification auth or an assertion->password
+    // level authentication. If the user hits cancel, they go back one state
+    // in the state machine.
+    if (self.emailSpecified && !self.emailMutable) {
+      self.publish("cancel_state");
+    }
+    else {
+      enterEmailState.call(this);
+    }
   }
 
   function forgotPassword() {
@@ -282,11 +306,39 @@ BrowserID.Modules.Authenticate = (function() {
       options = options || {};
 
       addressInfo = null;
-      lastEmail = options.email || "";
 
       var self=this;
 
-      self.allowUnverified = options.allowUnverified;
+      self.emailSpecified = options.email || "";
+      self.emailMutable = "email_mutable" in options
+                              ? options.email_mutable : true;
+      self.allowUnverified = options.allowUnverified || false;
+
+      lastEmail = options.email || "";
+
+      dom.removeClass(BODY_SELECTOR, EMAIL_IMMUTABLE_CLASS);
+      dom.removeAttr(EMAIL_SELECTOR, "disabled");
+
+      self.submit = null;
+
+      /*
+       * If the email is specified and is immutable, it means the user
+       * must enter the fallback password for the specified email.
+       * The user cannot modify the email address.
+       * Possible under the following circumstances:
+       * 1. post-reset-password where the email verification occurs in a second
+       *        browser.
+       * 2. user is signed in to Persona using an address backed by a primary
+       *        IdP and they have just chosen an email address backed by the
+       *        fallback IdP. (assertion->password level upgrade)
+       * 3. email is in transition-to-secondary state and the user just came
+       *        from the email picker.
+       */
+      if (self.emailSpecified && !self.emailMutable) {
+        dom.addClass(BODY_SELECTOR, EMAIL_IMMUTABLE_CLASS);
+        dom.setAttr(EMAIL_SELECTOR, "disabled", "disabled");
+      }
+
 
       dom.addClass(BODY_SELECTOR, AUTHENTICATION_CLASS);
       dom.addClass(BODY_SELECTOR, FORM_CLASS);
@@ -316,15 +368,23 @@ BrowserID.Modules.Authenticate = (function() {
       // element blurs but it has been updated via autofill.  See issue #406
       self.bind(EMAIL_SELECTOR, "change", emailChange);
       self.click(FORGOT_PASSWORD_SELECTOR, forgotPassword);
-      self.click(CANCEL_PASSWORD_SELECTOR, enterEmailState);
+      self.click(CANCEL_PASSWORD_SELECTOR, cancelPassword);
 
       Module.sc.start.call(self, options);
-      initialState.call(self, options);
+      chooseInitialState.call(self, options);
     },
 
     stop: function() {
       dom.removeClass(BODY_SELECTOR, AUTHENTICATION_CLASS);
       dom.removeClass(BODY_SELECTOR, FORM_CLASS);
+      dom.removeClass(BODY_SELECTOR, EMAIL_IMMUTABLE_CLASS);
+
+      _.each(hints, function(className) {
+        dom.removeClass("body", className);
+      });
+
+      dom.removeAttr(EMAIL_SELECTOR, "disabled");
+
       Module.sc.stop.call(this);
     }
 

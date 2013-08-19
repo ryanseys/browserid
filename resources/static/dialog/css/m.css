@@ -36,7 +36,7 @@
     letter-spacing: normal;
   }
 
-  header, footer, .persona_intro {
+  footer, .persona_intro {
     display: none;
   }
 
@@ -56,6 +56,7 @@
     height: 40px;
     min-width: 105px;
     font-size: 14px;
+    line-height: 28px;
     padding: 6px 10px 8px;
     border-radius: 2px;
     float: right;
@@ -130,7 +131,7 @@
    */
   .buttonrow a {
     background-color: #fcfcfb;
-    background-image: -webkit-gradient(linear, left top, left bottom, from(#fcfcfb), to(#d8d9d8)));
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#fcfcfb), to(#d8d9d8));
     background-image: -webkit-linear-gradient(top, #fcfcfb, #d8d9d8);
     background-image:    -moz-linear-gradient(top, #fcfcfb, #d8d9d8);
     background-image:     -ms-linear-gradient(top, #fcfcfb, #d8d9d8);
@@ -142,7 +143,7 @@
 
   .buttonrow a:hover,
   .buttonrow a:focus {
-    background-image: -webkit-gradient(linear, left top, left bottom, from(#fcfcfb), to(#ccc)));
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#fcfcfb), to(#ccc));
     background-image: -webkit-linear-gradient(top, #fcfcfb, #ccc);
     background-image:    -moz-linear-gradient(top, #fcfcfb, #ccc);
     background-image:     -ms-linear-gradient(top, #fcfcfb, #ccc);
@@ -151,7 +152,7 @@
   }
 
   .buttonrow a:active {
-    background-image: -webkit-gradient(linear, left top, left bottom, from(#d8d9d8), to(#fcfcfb)));
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#d8d9d8), to(#fcfcfb));
     background-image: -webkit-linear-gradient(top, #d8d9d8, #fcfcfb);
     background-image:    -moz-linear-gradient(top, #d8d9d8, #fcfcfb);
     background-image:     -ms-linear-gradient(top, #d8d9d8, #fcfcfb);
@@ -192,6 +193,14 @@
     border: 1px solid #0096dc;
     box-shadow: 0 0 5px 0 #0096dc;
   }
+
+  input[type=text].invalid,
+  input[type=email].invalid,
+  input[type=password].invalid {
+      border: 1px solid #a50022;
+      box-shadow: none;
+  }
+
 
   /**
    * Android ICS (2.3.*) has an issue where the background image dissappears
@@ -259,7 +268,6 @@
    * formWrap is the section that holds the main content.
    */
   #formWrap {
-    background-color: transparent;
     position: static;
     display: block;
   }
@@ -335,9 +343,15 @@
       padding: 10px;
       text-align: center;
       left: 0;
-      background-color: #dcdcdc;
       border-bottom: 1px solid #bcbcbc;
       box-shadow: 0px -1px #fff inset;
+  }
+
+  /**
+   * This will be overridden by JS if the RP specifies a background color
+   */
+  .rpBackground {
+      background-color: #dcdcdc;
   }
 
   /**
@@ -376,7 +390,7 @@
       vertical-align: middle;
   }
 
-  .tospp {
+  .tospp, .tospp a {
     font-size: 8.375pt;
   }
 
@@ -384,6 +398,11 @@
     position: static;
     width: auto;
     padding: 0;
+  }
+
+  #signIn .table {
+    background-color: #eff0f2;
+    box-shadow: none;
   }
 
   #signIn .vertical {
@@ -600,6 +619,10 @@
     padding: 10px;
   }
 
+  #error .lighter {
+    color: #fff;
+  }
+
   a.emphasize {
     font-size: 14px;
     padding: 5px;
@@ -634,8 +657,13 @@
    * or else their content is not displayed on mobile devices. See issue #1998
    */
   #error.unsupported, #error.cookies_disabled {
-    position: static;
-    height: 250px;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 10px;
   }
 
   /**

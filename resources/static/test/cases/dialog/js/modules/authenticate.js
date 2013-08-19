@@ -140,29 +140,36 @@
     });
   });
 
-  asyncTest("email declared in options - prefill address field", function() {
+  asyncTest("mutable email declared in options - email can be changed, " +
+      "focus email field", function() {
     controller.destroy();
     $(EMAIL_SELECTOR).val("");
 
-    createController({ email: "registered@testuser.com",
+    createController({
+      email: "registered@testuser.com",
+      email_mutable: true,
       ready: function() {
         equal($(EMAIL_SELECTOR).val(), "registered@testuser.com", "email prefilled");
-        equal($("input[type=password]").is(":visible"), false, "password is not shown");
+        testElementHasClass("body", "start");
+        testElementNotHasClass("body", "returning");
+        testElementNotHasClass("body", "emailImmutable");
         start();
       }
     });
   });
 
-  asyncTest("known secondary email declared in options - show password field", function() {
+  asyncTest("immutable email declared in options - email cannot be changed, " +
+      "straight to password field", function() {
     controller.destroy();
     $(EMAIL_SELECTOR).val("");
+
     createController({
       email: "registered@testuser.com",
-      type: "secondary",
-      state: "known",
+      email_mutable: false,
       ready: function() {
         equal($(EMAIL_SELECTOR).val(), "registered@testuser.com", "email prefilled");
-        ok($("body").hasClass("returning"));
+        testElementHasClass("body", "returning");
+        testElementHasClass("body", "emailImmutable");
         start();
       }
     });
@@ -178,11 +185,12 @@
       allowUnverified: true,
       ready: function() {
         equal($(EMAIL_SELECTOR).val(), "unverified@testuser.com", "email prefilled");
-        ok($("body").hasClass("returning"));
+        testElementHasClass("body", "returning");
         start();
       }
     });
   });
+
   function testUserUnregistered() {
     register("new_user", function(msg, info, rehydrate) {
       ok(info.email, "new_user triggered with info.email");
@@ -226,8 +234,7 @@
     xhr.useResult("known_secondary");
 
     register("enter_password", function() {
-      testElementTextEquals(AUTHENTICATION_LABEL,
-          $(PASSWORD_LABEL).html(), "enter password message shown");
+      testElementHasClass("body", "returning");
       start();
     });
 
@@ -244,8 +251,7 @@
         $(EMAIL_SELECTOR).val("registered@testuser.com");
 
         register("enter_password", function() {
-          testElementTextEquals(AUTHENTICATION_LABEL,
-              $(PASSWORD_LABEL).html(), "enter password message shown");
+          testElementHasClass("body", "returning");
           start();
         });
 
@@ -262,7 +268,7 @@
     $(EMAIL_SELECTOR).val("registered@testuser.com");
 
     controller.checkEmail(null, function() {
-      equal($("body").hasClass("submit_disabled"), false);
+      testElementNotHasClass("body", "submit_disabled");
       equal(typeof $("#authentication_email").attr("disabled"), "undefined");
 
       start();
@@ -337,7 +343,7 @@
     xhr.useResult("secondaryTransition");
 
     register("enter_password", function() {
-      equal($(AUTHENTICATION_LABEL).html(), $(TRANSITION_TO_SECONDARY_LABEL).html(), "transition message shown");
+      testElementHasClass("body", "transitionToSecondary");
       start();
     });
 
@@ -350,7 +356,7 @@
     xhr.useResult("secondaryTransition");
 
     register("enter_password", function(msg, info) {
-      equal($(AUTHENTICATION_LABEL).html(), $(TRANSITION_TO_SECONDARY_LABEL).html(), "transition message shown");
+      testElementHasClass("body", "transitionToSecondary");
       equal(info.email, "registered@testuser.com");
       start();
     });

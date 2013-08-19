@@ -37,9 +37,17 @@ suite.addBatch({
   'GET /.well-known/browserid?domain=yahoo.com':
                                  respondsWith(200),
   'GET /unsupported_dialog':     respondsWith(200),
+  'GET /unsupported_dialog_without_watch':
+                                 respondsWith(200),
   'GET /cookies_disabled':       respondsWith(200),
   'GET /developers':             respondsWith(302),
   'GET /developers/':            respondsWith(302),
+  'GET /signup':                 respondsWith(301),
+  'GET /signup/':                respondsWith(301),
+  'GET /signin':                 respondsWith(301),
+  'GET /signin/':                respondsWith(301),
+  'GET /forgot':                 respondsWith(301),
+  'GET /forgot/':                respondsWith(301),
   'GET /test':                   respondsWith(301),
   'GET /test/':                  respondsWith(200),
   'GET /include.js':             respondsWith(200),

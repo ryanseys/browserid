@@ -318,7 +318,7 @@
   });
 
   asyncTest("logout with XHR failure", function() {
-    failureCheck(network.logout);
+    failureCheck(401, network.logout);
   });
 
 
@@ -528,7 +528,7 @@
   });
 
   asyncTest("cookiesEnabled with cookies enabled - return true status", function() {
-    network.init({ cookiesEnabledOverride: true });
+    network.cookiesEnabledOverride = true;
     network.cookiesEnabled(function(status) {
       equal(status, true, "cookies are enabled, correct status");
       start();
@@ -536,7 +536,7 @@
   });
 
   asyncTest("cookiesEnabled with cookies disabled - return true status", function() {
-    network.init({ cookiesEnabledOverride: false });
+    network.cookiesEnabledOverride = false;
     network.cookiesEnabled(function(status) {
       equal(status, false, "cookies are disabled, correct status");
       start();
@@ -553,18 +553,22 @@
   asyncTest("cookiesEnabled with onComplete exception thrown - should not call onComplete a second time", function() {
     // Since we are manually throwing an exception, it must be caught
     // below.
-    try {
-      network.cookiesEnabled(function(status) {
-        // if there is a problem, this callback will be called a second time
-        // with a false status.
-        equal(status, true, "cookies are enabled, correct status");
-        start();
+    network.withContext(function() {
+      var err;
+      try {
+        network.cookiesEnabled(function(status) {
+          // if there is a problem, this callback will be called a second time
+          // with a false status.
+          equal(status, true, "cookies are enabled, correct status");
+          start();
 
-        throw "callback exception";
-      }, testHelpers.unexpectedXHRFailure);
-    } catch(e) {
-      equal(e, "callback exception", "correct exception caught");
-    }
+          throw "callback exception";
+        }, testHelpers.unexpectedXHRFailure);
+      } catch(e) {
+        err = e;
+      }
+      equal(err, "callback exception", "correct exception caught");
+    }, testHelpers.unexpectedXHRFailure);
   });
 
   asyncTest("prolongSession with authenticated user, success - call complete", function() {

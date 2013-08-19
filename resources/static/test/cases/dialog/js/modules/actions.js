@@ -87,8 +87,9 @@
     },
 
     teardown: function() {
-      if(controller) {
+      if (controller) {
         controller.destroy();
+        controller = null;
       }
       testHelpers.teardown();
     }
@@ -102,18 +103,6 @@
   asyncTest("doVerifyPrimaryUser - start the verify_primary_user service", function() {
     testActionStartsModule("doVerifyPrimaryUser", {},
       "verify_primary_user");
-  });
-
-  asyncTest("doCannotVerifyRequiredPrimary - show the error screen", function() {
-    createController({
-      ready: function() {
-        controller.doCannotVerifyRequiredPrimary({ email: TEST_EMAIL});
-
-        testHelpers.testErrorVisible();
-        start();
-      }
-    });
-
   });
 
   asyncTest("doPrimaryUserProvisioned - start the primary_user_verified service", function() {
@@ -202,6 +191,11 @@
 
   asyncTest("doCheckAuth of unauthenticated user", function() {
     testDoCheckAuth(true, undefined, undefined, false);
+  });
+
+  asyncTest("doCompleteSignIn starts complete_sign_in service", function() {
+    testActionStartsModule('doCompleteSignIn', { email: TEST_EMAIL },
+      "complete_sign_in");
   });
 
 }());

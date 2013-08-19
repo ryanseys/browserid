@@ -13,8 +13,7 @@ BrowserID.Modules.Actions = (function() {
       mediator = bid.Mediator,
       dialogHelpers = bid.Helpers.Dialog,
       runningService,
-      onsuccess,
-      onerror;
+      onsuccess;
 
   function startService(name, options, reported_service_name) {
     mediator.publish("service", { name: reported_service_name || name });
@@ -49,7 +48,6 @@ BrowserID.Modules.Actions = (function() {
       data = data || {};
 
       onsuccess = data.onsuccess;
-      onerror = data.onerror;
 
       sc.start.call(self, data);
 
@@ -92,10 +90,6 @@ BrowserID.Modules.Actions = (function() {
       startService("authenticate", info);
     },
 
-    doAuthenticateWithRequiredEmail: function(info) {
-      startService("required_email", info);
-    },
-
     doAuthenticateWithUnverifiedEmail: function(info) {
       var self = this;
       dialogHelpers.authenticateUser.call(this, info.email, info.password,
@@ -131,15 +125,11 @@ BrowserID.Modules.Actions = (function() {
           "transition_to_secondary_confirmed");
     },
 
-    doAssertionGenerated: function(info) {
-      // Clear onerror before the call to onsuccess - the code to onsuccess
-      // calls window.close, which would trigger the onerror callback if we
-      // tried this afterwards.
-      this.hideWait();
-      dialogHelpers.animateClose(function() {
-        onerror = null;
-        if(onsuccess) onsuccess(info);
-      });
+    doCompleteSignIn: function(info) {
+      info.ready = function() {
+        onsuccess(info);
+      };
+      startService("complete_sign_in", info);
     },
 
     doNotMe: function() {
@@ -168,12 +158,12 @@ BrowserID.Modules.Actions = (function() {
       startService("verify_primary_user", info);
     },
 
-    doCannotVerifyRequiredPrimary: function(info) {
-      this.renderError("cannot_verify_required_email", info);
-    },
-
     doPrimaryUserProvisioned: function(info) {
       startService("primary_user_provisioned", info);
+    },
+
+    doPrimaryUserNotProvisioned: function(info) {
+      startService("primary_user_not_provisioned", info);
     },
 
     doPrimaryOffline: function(info) {
