@@ -1,5 +1,12 @@
 <% include _header.html.ejs %>
 
+  <div itemscope itemtype="http://schema.org/EmailMessage">
+    <meta itemprop="description" content="Complete your sign-in"/>
+    <div itemprop="action" itemscope itemtype="http://schema.org/ViewAction">
+      <link itemprop="url" href="<%= link %>"/>
+      <meta itemprop="name" content="Complete sign-in"/>
+    </div>
+  </div>
 
   <tr>
     <td align="center">
